@@ -12,10 +12,10 @@
 int main (int argc, char *argv[])
 {
 int nthreads, i, tid;
-float total;
+long total = 0;
 
 /*** Spawn parallel region ***/
-#pragma omp parallel private(i,tid)
+#pragma omp parallel private(i, tid)
 // Comment:
 // For each thread, i and tid should be private.
 // Declare that i and tid are private in #pragma omp.
@@ -32,15 +32,15 @@ float total;
   #pragma omp barrier
 
   /* do some work */
-  total = 0.0;
+  // total = 0;
   #pragma omp for schedule(dynamic,10) reduction(+:total)
   // Comment:
   // To parallel calculate the summation, the reduction clause is needed.
   // Add the clause, reduction(+:total).
   for (i=0; i<1000000; i++)
-     total = total + i*1.0;
+     total = total + i;
 
-  printf ("Thread %d is done! Total= %e\n",tid,total);
+  printf ("Thread %d is done! Total= %ld\n",tid,total);
 
   } /*** End of parallel region ***/
 }
