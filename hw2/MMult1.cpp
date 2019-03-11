@@ -25,7 +25,8 @@ void MMult0(long m, long n, long k, double *a, double *b, double *c) {
 }
 
 void MMult1(long m, long n, long k, double *a, double *b, double *c) {
-
+#pragma omp parallel
+{
   double* A = (double*) aligned_malloc(BLOCK_SIZE * BLOCK_SIZE * sizeof(double));
   double* B = (double*) aligned_malloc(BLOCK_SIZE * BLOCK_SIZE * sizeof(double));
   double* C = (double*) aligned_malloc(BLOCK_SIZE * BLOCK_SIZE * sizeof(double));
@@ -41,9 +42,12 @@ void MMult1(long m, long n, long k, double *a, double *b, double *c) {
   long N = n / BLOCK_SIZE;
   long K = k / BLOCK_SIZE;
 
-  // #pragma omp for
-  for (long i = 0; i < M; i++) {
-    for (long j = 0; j < N; j++) {
+  #pragma omp for
+  for (long BLOCK = 0; BLOCK < M*N; BLOCK++) {
+    int i = BLOCK % M;
+    int j = BLOCK / M;
+  // for (long i = 0; i < M; i++) {
+  //   for (long j = 0; j < N; j++) {
       //Read Block C.
       for (int ic = 0; ic < BLOCK_SIZE; ic++) {
         for (int jc = 0; jc < BLOCK_SIZE; jc++) {
@@ -71,7 +75,9 @@ void MMult1(long m, long n, long k, double *a, double *b, double *c) {
         }
       }
     }
-  }
+  //   }
+  // }
+
   aligned_free(A);
   aligned_free(B);
   aligned_free(C);
@@ -79,11 +85,12 @@ void MMult1(long m, long n, long k, double *a, double *b, double *c) {
   // free(B);
   // free(C);
 }
+}
 
 int main(int argc, char** argv) {
   const long PFIRST = BLOCK_SIZE;
   const long PLAST = 2000;
-  const long PINC = std::max(50/BLOCK_SIZE,1) * BLOCK_SIZE; // multiple of BLOCK_SIZE
+  const long PINC = std::max(50/BLOCK_SIZE,2) * BLOCK_SIZE; // multiple of BLOCK_SIZE
 
   printf(" Dimension       Time    Gflop/s       GB/s        Error\n");
   for (long p = PFIRST; p < PLAST; p += PINC) {
@@ -106,7 +113,6 @@ int main(int argc, char** argv) {
 
     Timer t;
     t.tic();
-    #pragma omp parallel for
     for (long rep = 0; rep < NREPEATS; rep++) {
       MMult1(m, n, k, a, b, c);
     }
