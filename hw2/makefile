@@ -1,12 +1,12 @@
 # make -j # multi cores
 
-FLAGS = -O3 -march=native -fopenmp
+FLAGS = -std=c++11 -O3 -march=native -fopenmp
 PROGS = MMult1 val_test01_solved val_test02_solved omp_solved2 omp_solved3 \
 	omp_solved4 omp_solved5 omp_solved6 jacobi2D-omp gs2D-omp
 
 all: $(PROGS)
 
-MMutl1: MMult1.cpp
+MMult1: MMult1.cpp
 	g++ $(FLAGS) MMult1.cpp -o MMult1
 
 val_test01_solved: val_test01_solved.cpp
@@ -37,4 +37,4 @@ gs2D-omp: gs2D-omp.cpp
 	g++ $(FLAGS) gs2D-omp.cpp -o gs2D-omp
 
 clean:
-	rm -f $(PROGS)
+	rm -rf $(PROGS)
