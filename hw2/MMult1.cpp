@@ -5,7 +5,7 @@
 #include <omp.h>
 #include "utils.h"
 
-#define BLOCK_SIZE 16
+#define BLOCK_SIZE 32
 
 // Note: matrices are stored in column major order; i.e. the array elements in
 // the (m x n) matrix C are stored in the sequence: {C_00, C_10, ..., C_m0,
@@ -25,7 +25,58 @@ void MMult0(long m, long n, long k, double *a, double *b, double *c) {
 }
 
 void MMult1(long m, long n, long k, double *a, double *b, double *c) {
-  // TODO: See instructions below
+
+  double* A = (double*) aligned_malloc(BLOCK_SIZE * BLOCK_SIZE * sizeof(double));
+  double* B = (double*) aligned_malloc(BLOCK_SIZE * BLOCK_SIZE * sizeof(double));
+  double* C = (double*) aligned_malloc(BLOCK_SIZE * BLOCK_SIZE * sizeof(double));
+  // double *A = new double[BLOCK_SIZE*BLOCK_SIZE];
+  // double *B = new double[BLOCK_SIZE*BLOCK_SIZE];
+  // double *C = new double[BLOCK_SIZE*BLOCK_SIZE];
+  for (long i = 0; i < BLOCK_SIZE*BLOCK_SIZE; i++) {
+    A[i] = 0.0;
+    B[i] = 0.0;
+    C[i] = 0.0;
+  }
+  long M = m / BLOCK_SIZE;
+  long N = n / BLOCK_SIZE;
+  long K = k / BLOCK_SIZE;
+
+  for (long i = 0; i < M; i++) {
+    for (long j = 0; j < N; j++) {
+      //Read Block C.
+      for (int ic = 0; ic < BLOCK_SIZE; ic++) {
+        for (int jc = 0; jc < BLOCK_SIZE; jc++) {
+          C[jc*BLOCK_SIZE + ic] = c[m*(j*BLOCK_SIZE+jc) + i*BLOCK_SIZE + ic];
+        }
+      }
+      //There are K blocks of A and B. Read A and B.
+      for (long p = 0; p < K; p++) {
+        for (int ia = 0; ia < BLOCK_SIZE; ia++) {
+          for (int ja = 0; ja < BLOCK_SIZE; ja++) {
+            A[ja*BLOCK_SIZE + ia] = a[m*(p*BLOCK_SIZE+ja) + i*BLOCK_SIZE + ia];
+          }
+        }
+        for (int ib = 0; ib < BLOCK_SIZE; ib++) {
+          for (int jb = 0; jb < BLOCK_SIZE; jb++) {
+            B[jb*BLOCK_SIZE + ib] = b[k*(j*BLOCK_SIZE+jb) + p*BLOCK_SIZE + ib];
+          }
+        }
+        MMult0(BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE, A, B, C);
+      }
+      //Write Block C back to c.
+      for (int ic = 0; ic < BLOCK_SIZE; ic++) {
+        for (int jc = 0; jc < BLOCK_SIZE; jc++) {
+          c[m*(j*BLOCK_SIZE + jc) + i*BLOCK_SIZE + ic] = C[jc*BLOCK_SIZE + ic];
+        }
+      }
+    }
+  }
+  aligned_free(A);
+  aligned_free(B);
+  aligned_free(C);
+  // free(A);
+  // free(B);
+  // free(C);
 }
 
 int main(int argc, char** argv) {
@@ -54,12 +105,13 @@ int main(int argc, char** argv) {
 
     Timer t;
     t.tic();
+    // #pragma omp parallel for
     for (long rep = 0; rep < NREPEATS; rep++) {
       MMult1(m, n, k, a, b, c);
     }
     double time = t.toc();
-    double flops = 0; // TODO: calculate from m, n, k, NREPEATS, time
-    double bandwidth = 0; // TODO: calculate from m, n, k, NREPEATS, time
+    double flops = 2*NREPEATS*m*n*k/(1e9)/time; // TODO: calculate from m, n, k, NREPEATS, time
+    double bandwidth = NREPEATS*4*m*n*k*sizeof(double)/1e9/time; // TODO: calculate from m, n, k, NREPEATS, time
     printf("%10d %10f %10f %10f", p, time, flops, bandwidth);
 
     double max_err = 0;
