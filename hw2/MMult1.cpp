@@ -41,6 +41,7 @@ void MMult1(long m, long n, long k, double *a, double *b, double *c) {
   long N = n / BLOCK_SIZE;
   long K = k / BLOCK_SIZE;
 
+  // #pragma omp for
   for (long i = 0; i < M; i++) {
     for (long j = 0; j < N; j++) {
       //Read Block C.
@@ -105,7 +106,7 @@ int main(int argc, char** argv) {
 
     Timer t;
     t.tic();
-    // #pragma omp parallel for
+    #pragma omp parallel for
     for (long rep = 0; rep < NREPEATS; rep++) {
       MMult1(m, n, k, a, b, c);
     }
