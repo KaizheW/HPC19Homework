@@ -50,13 +50,14 @@ void gs(long n, long max_iter, double *u, double *f) {
     res = sqrt(res);
     // printf("%5d      %10f\n", iter, res);
   }
-  printf("%10f\n",res);
+  printf("After %d iterations, the residual is %f\n",max_iter, res);
   aligned_free(uk);
 }
 
 int main(int argc, char** argv) {
   long n = 100;
   long max_iter = 1000;
+  printf("Matrix size: %d\n", n);
 
   double* u = (double*) aligned_malloc((n+2) * (n+2) * sizeof(double));
   double* f = (double*) aligned_malloc((n+2) * (n+2) * sizeof(double));
