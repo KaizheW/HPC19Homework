@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
     }
     double time = t.toc();
     double flops = 2*NREPEATS*m*n*k/(1e9)/time;
-    double bandwidth = 4*REPEATS*m*n*k* sizeof(double)/1e9/time;
+    double bandwidth = 4*NREPEATS*m*n*k* sizeof(double)/1e9/time;
     printf("%10d %10f %10f %10f", p, time, flops, bandwidth);
 
     double max_err = 0;
