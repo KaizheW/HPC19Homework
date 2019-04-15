@@ -96,17 +96,14 @@ __global__ void product(double* sum, const double* A, const double* b, long N){
 }
 
 int main() {
-  long N = (1UL<<15);
+  long N = (1UL<<12);
 
   double *x, *y_ref, *y, *A;
   cudaMallocHost((void**)&x, N * sizeof(double));
-  cudaMallocHost((void**)&y, N * sizeof(double));
   cudaMallocHost((void**)&A, N*N*sizeof(double));
   #pragma omp parallel for schedule(static)
   for (long i = 0; i < N; i++) {
-    x[i] = 1.0/(i+1);
-    y[i] = 0;
-    y_ref[i] = 0;
+    x[i] = drand48();
   }
   for (long i = 0; i < N*N; i++) {
     A[i] = drand48();
@@ -127,6 +124,7 @@ int main() {
   cudaMalloc(&z_d, N_work*sizeof(double));
   cudaMemcpyAsync(x_d, x, N*sizeof(double), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(A_d, A, N*N*sizeof(double), cudaMemcpyHostToDevice);
+  cudaDeviceSynchronize();
   tt = omp_get_wtime();
   for (long i = 0; i < N; i++) {
     long Nb = (N+BLOCK_SIZE-1)/(BLOCK_SIZE);
@@ -137,7 +135,7 @@ int main() {
       reduction<<<Nb,BLOCK_SIZE>>>(z_d + N, z_d, N);
       z_d += N;
     }
-    cudaMemcpyAsync(y[i], z_d, 1*sizeof(double, cudaMemcpyDeviceToHost));
+    cudaMemcpyAsync(y[i], z_d[0], 1*sizeof(double, cudaMemcpyDeviceToHost));
     cudaDeviceSynchronize();
   }
 
@@ -153,7 +151,6 @@ int main() {
   cudaFree(A_d);
   cudaFreeHost(A);
   cudaFreeHost(x);
-  cudaFreeHost(y);
 
   return 0;
 }
