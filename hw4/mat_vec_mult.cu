@@ -68,7 +68,7 @@ __global__ void product(double* sum, const double* A, const double* b, long N){
   __shared__ double smem[BLOCK_SIZE];
   int idx = (blockIdx.x) * blockDim.x + threadIdx.x;
 
-  if (idx < N*N) smem[threadIdx.x] = A[idx]*b[idx % N];
+  if (idx < N) smem[threadIdx.x] = A[idx]*b[idx];
   else smem[threadIdx.x] = 0;
 
   __syncthreads();
@@ -116,36 +116,31 @@ int main() {
   MVMult_CPU(y_ref, A, x, N);
   printf("CPU Bandwidth = %f GB/s\n", 3*N*N*sizeof(double) / (omp_get_wtime()-tt)/1e9);
 
-  double *x_d, *y_d, *z_d;
+  double *x_d, *z_d;
   double *A_d;
+  long N_work = 1;
+  for (long i = (N*N+BLOCK_SIZE-1)/(BLOCK_SIZE); i > 1; i = (i+BLOCK_SIZE-1)/(BLOCK_SIZE)) {
+    N_work += i;
+  }
   cudaMalloc(&x_d, N*sizeof(double));
-  cudaMalloc(&y_d, N*sizeof(double));
   cudaMalloc(&A_d, N*N*sizeof(double));
-  long Nb = (N*N+BLOCK_SIZE-1)/(BLOCK_SIZE);
-  // long Nl = (N+BLOCK_SIZE-1)/(BLOCK_SIZE);
-  cudaMalloc(&z_d, Nb*sizeof(double));
-  // long N_work = 1;
-  // for (long i = (N*N+BLOCK_SIZE-1)/(BLOCK_SIZE); i > 1; i = (i+BLOCK_SIZE-1)/(BLOCK_SIZE)) {
-  //   N_work += i;
-  // }
-  // cudaMalloc(&y_d, N_work*sizeof(double)); // extra memory buffer for reduction across thread-blocks
-
+  cudaMalloc(&z_d, N_work*sizeof(double));
   cudaMemcpyAsync(x_d, x, N*sizeof(double), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(A_d, A, N*N*sizeof(double), cudaMemcpyHostToDevice);
-  cudaDeviceSynchronize();
   tt = omp_get_wtime();
+  for (long i = 0; i < N; i++) {
+    long Nb = (N+BLOCK_SIZE-1)/(BLOCK_SIZE);
+    product<<<Nb,BLOCK_SIZE>>>(z_d, A_d+i*N, x_d, N);
+    while (Nb > 1) {
+      long N = Nb;
+      Nb = (Nb+BLOCK_SIZE-1)/(BLOCK_SIZE);
+      reduction<<<Nb,BLOCK_SIZE>>>(z_d + N, z_d, N);
+      z_d += N;
+    }
+    cudaMemcpyAsync(y[i], z_d, 1*sizeof(double, cudaMemcpyDeviceToHost));
+    cudaDeviceSynchronize();
+  }
 
-  product<<<Nb,BLOCK_SIZE>>>(z_d, A_d, x_d, N);
-  reduction<<<N,BLOCK_SIZE>>>(y_d, z_d, N);
-  // while (Nb > 1) {
-  //   long N = Nb;
-  //   Nb = (Nb+BLOCK_SIZE-1)/(BLOCK_SIZE);
-  //   reduction<<<Nb,BLOCK_SIZE>>>(z_d + N, z_d, N);
-  //   z_d += N;
-  // }
-
-  cudaMemcpyAsync(y, y_d, N*sizeof(double), cudaMemcpyDeviceToHost);
-  cudaDeviceSynchronize();
   printf("GPU Bandwidth = %f GB/s\n", N*N*sizeof(double) / (omp_get_wtime()-tt)/1e9);
   double error = 0;
   for (int i=0; i<N; i++){
@@ -154,7 +149,6 @@ int main() {
   printf("Error = %f\n", error);
 
   cudaFree(x_d);
-  cudaFree(y_d);
   cudaFree(z_d);
   cudaFree(A_d);
   cudaFreeHost(A);
