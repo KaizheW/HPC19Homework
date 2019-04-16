@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <omp.h>
 #include <string>
+#include <iostream>
 
 void product_cpu(double* sum_ptr, const double* a, const double* b, long N){
   double sum = 0;
@@ -83,7 +84,10 @@ __global__ void product(double* sum, const double* a, const double* b, long N){
 }
 
 int main() {
-  long N = (1UL<<25);
+  int exp;
+  std::cout << "N = 2^ " << std::endl;
+  std::cin >> exp; 
+  long N = (1UL<<exp);
 
   double *x, *y;
   cudaMallocHost((void**)&x, N * sizeof(double));

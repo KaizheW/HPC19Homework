@@ -1,3 +1,4 @@
+#include <iostream>
 #include <algorithm>
 #include <stdio.h>
 #include <omp.h>
@@ -86,7 +87,11 @@ __global__ void product(double* sum, const double* A, const double* b, long N){
 }
 
 int main() {
-  long N = (1UL<<10);
+  long N;
+  int exp;
+  std::cout << "N = 2^ " << std::endl;
+  std::cin >> exp;
+  N = (1UL<<exp);
 
   double *x, *A;
   cudaMallocHost((void**)&x, N * sizeof(double));
@@ -109,7 +114,6 @@ int main() {
   double tt = omp_get_wtime();
   MVMult_CPU(sum_ref, A, x, N);
   printf("CPU Bandwidth = %f GB/s\n", N*N*sizeof(double) / (omp_get_wtime()-tt)/1e9);
-  printf("CPU test %f \n", sum_ref[1]);
 
   double *x_d, *A_d, *z_d;
   cudaMalloc(&x_d, N*sizeof(double));
@@ -138,7 +142,6 @@ int main() {
   }
 
   printf("GPU Bandwidth = %f GB/s\n", N*N*sizeof(double) / (omp_get_wtime()-tt)/1e9);
-  printf("GPU test %f \n", sum[1]);
   double error = 0;
   #pragma omp parallel for reduction(+:error)
   for (long i = 0; i < N; i++) {
