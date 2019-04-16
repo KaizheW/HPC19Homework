@@ -1,0 +1,120 @@
+\documentclass[12pt]{article}
+
+%% FONTS
+%% To get the default sans serif font in latex, uncomment following line:
+ \renewcommand*\familydefault{\sfdefault}
+%%
+%% to get Arial font as the sans serif font, uncomment following line:
+%% \renewcommand{\sfdefault}{phv} % phv is the Arial font
+%%
+%% to get Helvetica font as the sans serif font, uncomment following line:
+% \usepackage{helvet}
+\usepackage[small,bf,up]{caption}
+\renewcommand{\captionfont}{\footnotesize}
+\usepackage[left=1in,right=1in,top=1in,bottom=1in]{geometry}
+\usepackage{graphics,epsfig,graphicx,float,subfigure,color}
+\usepackage{amsmath,amssymb,amsbsy,amsfonts,amsthm}
+\usepackage{url}
+\usepackage{boxedminipage}
+\usepackage[sf,bf,tiny]{titlesec}
+ \usepackage[plainpages=false, colorlinks=true,
+   citecolor=blue, filecolor=blue, linkcolor=blue,
+   urlcolor=blue]{hyperref}
+\usepackage{enumitem}
+\usepackage{verbatim}
+\usepackage{tikz,pgfplots}
+
+\newcommand{\todo}[1]{\textcolor{red}{#1}}
+% see documentation for titlesec package
+% \titleformat{\section}{\large \sffamily \bfseries}
+\titlelabel{\thetitle.\,\,\,}
+
+\newcommand{\bs}{\boldsymbol}
+\newcommand{\alert}[1]{\textcolor{red}{#1}}
+\setlength{\emergencystretch}{20pt}
+
+\begin{document}
+
+\begin{center}
+  \vspace*{-2cm}
+{\small MATH-GA 2012.001 and CSCI-GA 2945.001, Georg Stadler \&
+  Dhairya Malhotra (NYU Courant)}
+\end{center}
+\vspace*{.5cm}
+\begin{center}
+\large \textbf{%%
+Spring 2019: Advanced Topics in Numerical Analysis: \\
+High Performance Computing Assignment 4\\
+Kaizhe Wang (kw2223) }
+\end{center}
+
+% ****************************
+\begin{enumerate}
+% --------------------------
+
+\item {\bf Matrix-vector operations on a GPU.} 
+  
+  First check the correctness of my implementation: run codes with different matrix size, 
+  compare the CPU result and GPU result. This process is done on cuda2.cims.nyu.edu server, 
+  GeForce RTX 2080 Ti. For vector-vector inner product (vec\_vec\_mult.cu), if the size of vector is less than $2^{30}$,
+  CPU and GPU results are consistent. For the matrix-vector multiplication (mat\_vec\_mult.cu), 
+  if the size of matrix is less than $2^{16}$, two results are consistent. If the size of matrix is greater than the critical value, 
+  the GPU result is different from the CPU result.
+  
+  Then I run the CUDA code on different GPUs, to get the performance of each GPU. Bandwidth1 is obtained by vector-vector inner product, the size of vector I used is $2^{28}$; and bandwidth2 is obtained by performing matrix-vector multiplication, where the matrix size I used is $2^{14}$.
+  
+  (cuda4 and cuda5 were overload when I tried to run my code, so the performance of these GPUs are not determined by me yet.)
+  
+  \begin{center}
+\begin{tabular}{ |c|c|c|c| } 
+ \hline
+ Hostname    &   GPU   &    Bandwidth1 (GB/s)  &  Bandwidth2 (GB/s)\\
+ \hline
+        cuda1   & TITAN Black (6 GB)  &   73.311057 & 5.269748\\
+       cuda2   &  2080 Ti (11 GB) & 204.219057  & 6.399807 \\
+        cuda3  & TITAN V (12 GB)  & 318.870908  & 9.300983\\
+       cuda4  &  TITAN X (12 GB)  & TBD   & TBD\\
+       cuda5  & TITAN Z (12 GB) & TBD  & TBD\\
+  \hline
+\end{tabular}
+\end{center}
+
+The bandwidth obtained by vector-vector inner product is much greater then by matrix-vector multiplication, I think it's because in the matrix-vector multiplication, the inner product of each row of matrix and the vector, is done in serial, not parallel.
+  
+\item {\bf 2D Jacobi method on a GPU.}
+  
+  To get the performance of different GPUs, I run my codes with matrix size 1024$\times$1024, maximum iteration number is 10000, report the running time on GPUs.
+ \begin{center}
+\begin{tabular}{ |c|c|c|c| } 
+ \hline
+ Hostname    &   GPU   &    Time (s) \\
+ \hline
+        cuda1   & TITAN Black (6 GB)  &  6.590403 \\
+       cuda2   &  2080 Ti (11 GB) & 2.457543 \\
+        cuda3  & TITAN V (12 GB)  & 1.146881  \\
+       cuda4  &  TITAN X (12 GB)  &  TBD  \\
+       cuda5  & TITAN Z (12 GB) &  TBD \\
+  \hline
+\end{tabular}
+\end{center}
+  
+
+\item {\bf Pitch your final project.}  
+
+Topic: Correlation function with jackknife.\\
+
+Teammate: Yucheng Zhang.\\
+
+General Introduction: For this final project, we will do the estimation of correlation function of galaxies, which is one of the most important applications of High Performance Computing in Cosmology. The most computation intensive part is to calculate the distance between two sets of points and fit them into proper bins. \\
+
+The things we plan to do include:
+\begin{enumerate}
+\item Figure out the mesh algorithm. Naive pair count requires $O(N^2)$ time complexity, where N is the size of the data. With the mesh algorithm, we hope to reduce the time complexity to $O(NlogN)$.
+\item Figure out the way to jackknife resampling in the code. The input data points are divided into $njk$ parts, where $njk$ stands for the number of jackknife regions.
+\item Parallelize the code with OpenMP and MPI in C.
+\item Wrap the parallelized C with Python, which works better in loading data and plotting results.
+\end{enumerate}
+
+\end{enumerate}
+
+\end{document}
