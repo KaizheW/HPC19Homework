@@ -1,0 +1,88 @@
+\documentclass[12pt]{article}
+
+%% FONTS
+%% To get the default sans serif font in latex, uncomment following line:
+ \renewcommand*\familydefault{\sfdefault}
+%%
+%% to get Arial font as the sans serif font, uncomment following line:
+%% \renewcommand{\sfdefault}{phv} % phv is the Arial font
+%%
+%% to get Helvetica font as the sans serif font, uncomment following line:
+% \usepackage{helvet}
+\usepackage[small,bf,up]{caption}
+\renewcommand{\captionfont}{\footnotesize}
+\usepackage[left=1in,right=1in,top=1in,bottom=1in]{geometry}
+\usepackage{graphics,epsfig,graphicx,float,subfigure,color}
+\usepackage{amsmath,amssymb,amsbsy,amsfonts,amsthm}
+\usepackage{url}
+\usepackage{boxedminipage}
+\usepackage[sf,bf,tiny]{titlesec}
+ \usepackage[plainpages=false, colorlinks=true,
+   citecolor=blue, filecolor=blue, linkcolor=blue,
+   urlcolor=blue]{hyperref}
+\usepackage{enumitem}
+\usepackage{verbatim}
+\usepackage{tikz,pgfplots}
+
+\newcommand{\todo}[1]{\textcolor{red}{#1}}
+% see documentation for titlesec package
+% \titleformat{\section}{\large \sffamily \bfseries}
+\titlelabel{\thetitle.\,\,\,}
+
+\newcommand{\bs}{\boldsymbol}
+\newcommand{\alert}[1]{\textcolor{red}{#1}}
+\setlength{\emergencystretch}{20pt}
+
+\begin{document}
+
+\begin{center}
+  \vspace*{-2cm}
+{\small MATH-GA 2012.001 and CSCI-GA 2945.001, Georg Stadler \&
+  Dhairya Malhotra (NYU Courant)}
+\end{center}
+\vspace*{.5cm}
+\begin{center}
+\large \textbf{%%
+Spring 2019: Advanced Topics in Numerical Analysis: \\
+High Performance Computing Assignment 5\\
+Kaizhe Wang (kw2223)}
+\end{center}
+
+% ****************************
+\begin{enumerate}
+% --------------------------
+
+\item {\bf MPI ring communication.}  Write a distributed memory
+  program that sends an integer in a ring starting from process 0 to 1
+  to 2 (and so on). The last process sends the message back to process
+  0. Perform this loop $N$ times, where $N$ is set in the program or
+  on the command line.
+  \begin{itemize}
+  \item In the file \texttt{int\_ring.c}, use \texttt{mpirun}, it will first do the single integer ring sending process for 1000 loops, each loop has 4 process; then do a large array ring sending process. 
+  \item To run the code in one processor, please use: \\ \texttt{mpirun -n 4 ./int\_ring}
+  \item To run the code in multiple (\texttt{snappy2} and \texttt{snappy3}) processors, please use: \\ \texttt{mpirun -np 4 --map-by node --hostfile nodes ./int\_ring}
+  \item If I do the single integer ring communication on one node (say, \texttt{snappy2} at CIMS), the latency is about $1.33 \times 10^{-3}$ ms. If I do the same thing on two CIMS nodes (\texttt{snappy2} and \texttt{snappy3}), the latency is about $1.98 \times 10^{-1}$ ms. Messages sent through network is slower.
+  \item For the large array ring communication, the length of the array is $300000$. If the communication is done in one node, the bandwidth is about $1.80$ GB/s; If it's done through two nodes, the bandwidth is about $2.88 \times 10^{-2}$ GB/s.
+  \end{itemize}
+
+
+\item {\bf Provide details regarding your final project.}
+  
+  \begin{center}
+  \begin{tabular} {|c|p{9cm}|p{2cm}|}
+    \hline
+    \multicolumn{3}{|c|}{\bf Project: Parallel computing of Galaxy Correlation Functions} \\
+    \hline
+    Week & Work & Who  \\ \hline \hline
+    04/15-04/21 & Read papers underlying ideas, learn about the mesh lattice algorithm used here. & Yucheng, Kaizhe \\ \hline
+    04/22-04/28 & Write the serial code. & Yucheng, Kaizhe \\ \hline
+    04/29-05/05 & Parallelize the code with OpenMP. Verify the implementation. & Yucheng, Kaizhe \\ \hline
+    05/06-05/12 & Test the performance of OpenMP, try MPI and CUDA. Discuss with Prof. for any problems. & Kaizhe, Yucheng \\ \hline
+    05/13-05/19 & Write report and prepare for presentation.  & Kaizhe, Yucheng \\ \hline
+  \end{tabular}
+  \end{center}
+
+
+
+\end{enumerate}
+\end{document}
