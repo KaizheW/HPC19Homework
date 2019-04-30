@@ -49,8 +49,8 @@ int main(int argc, char** argv) {
   double tt = time_ring(Nrepeat, 1, comm);
   if (!rank) printf("ring latency: %e ms\n", tt);
 
-  Nrepeat = 100000;
-  long Nsize = 1000;
+  Nrepeat = 1000;
+  long Nsize = 300000;
   tt = time_ring(Nrepeat, Nsize, comm);
   if (!rank) printf("ring bandwidth: %e GB/s\n", (Nsize*sizeof(int)*Nrepeat)/tt/1e9);
 
