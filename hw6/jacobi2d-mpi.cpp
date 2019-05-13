@@ -21,7 +21,7 @@ double compute_residual(double *lu, int lN, double invhsq){
 }
 
 int main(int argc, char * argv[]){
-  int mpirank, i, p, N, lN, iter, max_iters;
+  int mpirank, p, N, lN, iter, max_iters;
   MPI_Status status, status1;
 
   MPI_Init(&argc, &argv);
@@ -67,9 +67,9 @@ int main(int argc, char * argv[]){
   for (iter = 0; iter < max_iters && gres/gres0 > tol; iter++) {
 
     /* Jacobi step for local points */
-    for (i = 1; i <= lN; i++){
-      for (j = 1; j <= lN; j++) {
-        lunew[i]  = 0.25 * (hsq + lu[(lN+2)*j+i-1] + lu[(lN+2)*j+i+1] +
+    for (int i = 1; i <= lN; i++){
+      for (int j = 1; j <= lN; j++) {
+        lunew[(lN+2)*j+i]  = 0.25 * (hsq + lu[(lN+2)*j+i-1] + lu[(lN+2)*j+i+1] +
           lu[(lN+2)*(j+1)+i] + lu[(lN+2)*(j-1)+i]);
       }
     }
@@ -108,9 +108,9 @@ int main(int argc, char * argv[]){
     lutemp = lu; lu = lunew; lunew = lutemp;
     if (0 == (iter % 10)) {
       gres = compute_residual(lu, lN, invhsq);
-      if (0 == mpirank) {
-	      printf("Iter %d: Residual: %g\n", iter, gres);
-      }
+      // if (0 == mpirank) {
+	     // printf("Iter %d: Residual: %g\n", iter, gres);
+      // }
     }
   }
 

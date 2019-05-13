@@ -28,12 +28,12 @@ int main( int argc, char *argv[]) {
   printf("rank: %d, first entry: %d\n", rank, vec[0]);
 
   // sort locally
-  double t = MPI_Wtime();
+  double tt = MPI_Wtime();
   std::sort(vec, vec+N);
 
   // sample p-1 entries from vector as the local splitters, i.e.,
   // every N/P-th entry of the sorted vector
-  int * lsp = (int *) malloc(sizeof(int)*(p-1));
+  int * lsp = (int*)malloc(sizeof(int)*(p-1));
   for (int i=0; i<p-1; i++) {
     lsp[i] = vec[i*N/(p-1)+N/p];
   }
@@ -41,19 +41,19 @@ int main( int argc, char *argv[]) {
   // every process communicates the selected entries to the root
   // process; use for instance an MPI_Gather
   // spc: SPlitter Candidate;
-  int * spc = NULL;
+  int* spc = NULL;
   if (rank == 0) {
-    int* spc = (int*) malloc(sizeof(int)*(p-1)*p);
+    spc = (int*)malloc(sizeof(int)*(p-1)*p);
   }
   MPI_Gather(lsp, p-1, MPI_INT, spc, p-1, MPI_INT, 0, comm);
 
   // root process does a sort and picks (p-1) splitters (from the
   // p(p-1) received elements)
-  int * sp = (int*) malloc(sizeof(int)*(p-1));
+  int * sp = (int*)malloc(sizeof(int)*(p-1));
   if (rank == 0) {
     // int* sp = (int*) malloc(sizeof(int)*(p-1));
     std::sort(spc, spc+(p-1)*p);
-    for (int i=0; i<p-1; i++) sp[i] = spc[(i+1)*p-1];
+    for (int i=0; i<p-1; i++) sp[i] = spc[i*p];
   }
 
   // root process broadcasts splitters to all other processes
@@ -71,7 +71,8 @@ int main( int argc, char *argv[]) {
   // counts and displacements. For a splitter s[i], the corresponding
   // send-displacement for the message to process (i+1) is then given by,
   // sdispls[i+1] = std::lower_bound(vec, vec+N, s[i]) - vec;
-  int* sdispls = (int*) calloc(sizeof(int), p);
+  int* sdispls = (int*)malloc(sizeof(int)*p);
+  sdispls[0] = 0;
   for (int i=0; i<p-1; i++) {
     sdispls[i+1] = std::lower_bound(vec, vec+N, sp[i]) - vec;
   }
@@ -79,25 +80,27 @@ int main( int argc, char *argv[]) {
   // send and receive: first use an MPI_Alltoall to share with every
   // process how many integers it should expect, and then use
   // MPI_Alltoallv to exchange the data
-  int* nsend = (int*) malloc(p*sizeof(int));
-  int* nrecv = (int*) malloc(p*sizeof(int));
+  int* nsend = (int*)malloc(p*sizeof(int));
+  int* nrecv = (int*)malloc(p*sizeof(int));
   for (int i = 0; i < p-1; i++){
     nsend[i] = sdispls[i+1] - sdispls[i];
   }
   nsend[p-1] = N - sdispls[p-1];
   MPI_Alltoall(nsend, 1, MPI_INT, nrecv, 1, MPI_INT, comm);
-  int* rdispls = (int*) calloc(sizeof(int), p);
+  int* rdispls = (int*)malloc(sizeof(int)*p);
+  rdispls[0] = 0;
   for (int i=0; i<p-1; i++) {
     rdispls[i+1] = rdispls[i] + nrecv[i];
   }
-  int localsize = rdispls[p-1]+nrecv[p-1];
-  int* localsort = (int*) malloc(sizeof(int)*localsize);
+  int localsize = rdispls[p-1] + nrecv[p-1];
+  int* localsort = (int*)malloc(sizeof(int)*localsize);
   MPI_Alltoallv(vec, nsend, sdispls, MPI_INT, localsort, nrecv, rdispls, MPI_INT, comm);
 
   // do a local sort of the received data
   std::sort(localsort, localsort+localsize);
-  t = MPI_Wtime() - t;
-  if (rank == 0) printf("time: %f \n", t);
+  MPI_Barrier(comm);
+  double elapsed = MPI_Wtime() - tt;
+  if (rank == 0) printf("Time elapsed is %f seconds.\n", elapsed);
 
   // every process writes its result to a file
   FILE* fd = NULL;
