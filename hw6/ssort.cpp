@@ -41,6 +41,7 @@ int main( int argc, char *argv[]) {
   // every process communicates the selected entries to the root
   // process; use for instance an MPI_Gather
   // spc: SPlitter Candidate;
+  int * spc = NULL;
   if (rank == 0) {
     int* spc = (int*) malloc(sizeof(int)*(p-1)*p);
   }
@@ -48,8 +49,9 @@ int main( int argc, char *argv[]) {
 
   // root process does a sort and picks (p-1) splitters (from the
   // p(p-1) received elements)
+  int * sp = (int*) malloc(sizeof(int)*(p-1));
   if (rank == 0) {
-    int* sp = (int*) malloc(sizeof(int)*(p-1));
+    // int* sp = (int*) malloc(sizeof(int)*(p-1));
     std::sort(spc, spc+(p-1)*p);
     for (int i=0; i<p-1; i++) sp[i] = spc[(i+1)*p-1];
   }
@@ -69,7 +71,7 @@ int main( int argc, char *argv[]) {
   // counts and displacements. For a splitter s[i], the corresponding
   // send-displacement for the message to process (i+1) is then given by,
   // sdispls[i+1] = std::lower_bound(vec, vec+N, s[i]) - vec;
-  int* sdispls = (int*) calloc(p*sizeof(int));
+  int* sdispls = (int*) calloc(sizeof(int), p);
   for (int i=0; i<p-1; i++) {
     sdispls[i+1] = std::lower_bound(vec, vec+N, sp[i]) - vec;
   }
@@ -84,11 +86,11 @@ int main( int argc, char *argv[]) {
   }
   nsend[p-1] = N - sdispls[p-1];
   MPI_Alltoall(nsend, 1, MPI_INT, nrecv, 1, MPI_INT, comm);
-  int* rdispls = (int*) calloc(p*sizeof(int));
+  int* rdispls = (int*) calloc(sizeof(int), p);
   for (int i=0; i<p-1; i++) {
     rdispls[i+1] = rdispls[i] + nrecv[i];
   }
-  int localsize = rdispls[p-1]+nrecv[p-1]
+  int localsize = rdispls[p-1]+nrecv[p-1];
   int* localsort = (int*) malloc(sizeof(int)*localsize);
   MPI_Alltoallv(vec, nsend, sdispls, MPI_INT, localsort, nrecv, rdispls, MPI_INT, comm);
 
