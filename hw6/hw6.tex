@@ -1,0 +1,152 @@
+\documentclass[12pt]{article}
+
+%% FONTS
+%% To get the default sans serif font in latex, uncomment following line:
+ \renewcommand*\familydefault{\sfdefault}
+%%
+%% to get Arial font as the sans serif font, uncomment following line:
+%% \renewcommand{\sfdefault}{phv} % phv is the Arial font
+%%
+%% to get Helvetica font as the sans serif font, uncomment following line:
+% \usepackage{helvet}
+\usepackage[small,bf,up]{caption}
+\renewcommand{\captionfont}{\footnotesize}
+\usepackage[left=1in,right=1in,top=1in,bottom=1in]{geometry}
+\usepackage{graphics,epsfig,graphicx,float,subfigure,color}
+\usepackage{amsmath,amssymb,amsbsy,amsfonts,amsthm}
+\usepackage{url}
+\usepackage{boxedminipage}
+\usepackage[sf,bf,tiny]{titlesec}
+ \usepackage[plainpages=false, colorlinks=true,
+   citecolor=blue, filecolor=blue, linkcolor=blue,
+   urlcolor=blue]{hyperref}
+\usepackage{enumitem}
+\usepackage{verbatim}
+\usepackage{tikz,pgfplots}
+
+\newcommand{\todo}[1]{\textcolor{red}{#1}}
+% see documentation for titlesec package
+% \titleformat{\section}{\large \sffamily \bfseries}
+\titlelabel{\thetitle.\,\,\,}
+
+\newcommand{\bs}{\boldsymbol}
+\newcommand{\alert}[1]{\textcolor{red}{#1}}
+\setlength{\emergencystretch}{20pt}
+
+\begin{document}
+
+\begin{center}
+  \vspace*{-2cm}
+{\small MATH-GA 2012.001 and CSCI-GA 2945.001, Georg Stadler \&
+  Dhairya Malhotra (NYU Courant)}
+\end{center}
+\vspace*{.5cm}
+\begin{center}
+\large \textbf{%%
+Spring 2019: Advanced Topics in Numerical Analysis: \\
+High Performance Computing Assignment 6\\
+Kaizhe Wang (kw2223) }
+\end{center}
+
+% ****************************
+\begin{enumerate}
+% --------------------------
+\setcounter{enumi}{-1}
+
+  
+\item {\bf Final project update.} 
+  
+   \begin{center}
+  \begin{tabular} {|c|p{9cm}|p{2cm}|}
+    \hline
+    \multicolumn{3}{|c|}{\bf Project: Parallel computing of Galaxy Correlation Functions} \\
+    \hline
+    Week & Work & Who  \\ \hline \hline
+    04/15-04/21 & Read papers underlying ideas, learn about the mesh lattice algorithm used here. Done. & Yucheng, Kaizhe \\ \hline
+    04/22-04/28 & Write the serial code. Done. & Yucheng, Kaizhe \\ \hline
+    04/29-05/05 & Parallelize the code with OpenMP. Verify the implementation. Done. & Yucheng, Kaizhe \\ \hline
+    05/06-05/12 & We've successfully ran the codes with MPI. & Kaizhe, Yucheng \\ \hline
+    05/13-05/19 & Test the performance of MPI, write report and prepare for presentation.  & Kaizhe, Yucheng \\ \hline
+  \end{tabular}
+  \end{center}
+
+\item {\bf MPI-parallel two-dimensional Jacobi smoother.} \\
+For the weak scaling study, I fixed the $N_l = 100$ and number of iterations to be 10000, increase the number of points as well as the MPI tasks. Here I plot the timing versus number of processors we use, in both regular scale and log-log scale.
+%\begin{center}
+%\begin{tabular}{ |c|c|c|c| } 
+% \hline
+% j   &   p   &    N  &  Time \\
+% \hline
+%        0   & 1  &   100 & 0.244898 \\
+%      1   &  4 & 200 & 1.307846 \\
+%        2  & 16  & 400  & 2.369991\\
+%       3  &  64 & 800   & 4.556929\\
+%  \hline
+%\end{tabular}
+%\end{center}
+\begin{figure}[h]
+            \centering
+            \includegraphics[width=0.45\textwidth]{1.eps}
+            \caption{Weak Scaling plot of the timings and number of processors.}
+            \label{fig:f1}
+\end{figure}
+\begin{figure}[h]
+            \centering
+            \includegraphics[width=0.45\textwidth]{2.eps}
+            \caption{Weak Scaling plot of the timings and number of processors, log-log plot}
+            \label{fig:f2}
+\end{figure}
+
+For the strong scaling study, choose $N_l$ as large as possible to fit on one processor and keep the problem size unchanged. Here I choose $N=40000$, number of iterations to be 10, increase the number of MPI task. I still plot the result in regular scale and log-log scale.
+%\begin{center}
+%\begin{tabular}{ |c|c|c|c| } 
+% \hline
+% j   &   p   &    $N_l$  &  Time \\
+% \hline
+%        0   & 1  &   40000 & 1554.032028 \\
+ %     1   &  4 & 20000 & 330.971857 \\
+ %       2  & 16  & 10000  & 72.943182\\
+%       3  &  64 & 5000   & 7.695291\\
+%  \hline
+%\end{tabular}
+%\end{center}
+\begin{figure}[h]
+            \centering
+            \includegraphics[width=0.45\textwidth]{3.eps}
+            \caption{Strong Scaling plot of the timings and number of processors.}
+            \label{fig:f3}
+\end{figure}
+\begin{figure}[h]
+            \centering
+            \includegraphics[width=0.45\textwidth]{4.eps}
+            \caption{Strong Scaling plot of the timings and number of processors, log-log plot}
+            \label{fig:f4}
+\end{figure}
+
+
+\item {\bf Parallel sample sort.}  
+ Include the MPI rank in the filename (see the example
+ \texttt{file-io.cpp} example file).  Run your implementation of
+ the sorting algorithm on at least 64 cores of Prince, and present
+ timings (not including the time to initialize the input array or the
+ time to write output to file) depending on the number of elements $N$
+ to be sorted per processor (report results for $N=10^4, 10^5$, and $10^6$).
+
+I ran the implementation of the sorting algorithm on 64 cores of Prince, and the timings versus the number of elements $N$ to be sorted per processor is:
+\begin{center}
+\begin{tabular}{ |c|c| } 
+ \hline
+$N_l$  &  Time \\
+ \hline
+  $10^4$ & 0.971192 \\
+   $10^5$ & 0.974211 \\
+  $10^6$ & 1.28274\\
+  $10^7$  & 2.64913\\
+  \hline
+\end{tabular}
+\end{center}
+
+Except $N=10^7$, the timings are almost the same. The number of elements $N$ can be assigned in the command line, say, \texttt{mpirun -np 64 ./ssort 100000}.
+
+\end{enumerate}
+\end{document}
