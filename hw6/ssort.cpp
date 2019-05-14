@@ -54,7 +54,7 @@ int main( int argc, char *argv[]) {
   if (rank == 0) {
     // int* sp = (int*) malloc(sizeof(int)*(p-1));
     std::sort(spc, spc+(p-1)*p);
-    for (int i=0; i<p-1; i++) sp[i] = spc[i*p];
+    for (int i=0; i<p-1; i++) sp[i] = spc[(i+1)*p-1];
   }
 
   // root process broadcasts splitters to all other processes
